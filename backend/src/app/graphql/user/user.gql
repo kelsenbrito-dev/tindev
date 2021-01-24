@@ -1,0 +1,20 @@
+type User {
+    _id: ID!
+    name: String!
+    username: String!
+    avatar: String
+    bio: String
+    likes: [User]
+    dislikes: [User]
+}
+
+type Query {
+    storeUser(username: String!): User!
+    storeUserLikes(_id: ID!, _idTarget: ID!): User!
+    storeUserDislikes(_id: ID!, _idTarget: ID!): User!
+    getUsersFree(_id: ID!): [User!]
+}
+ 
+type Subscription {
+    userMatch: User!
+}
