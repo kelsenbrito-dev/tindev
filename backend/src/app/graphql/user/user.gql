@@ -8,13 +8,20 @@ type User {
     dislikes: [User]
 }
 
+type SubscriptionData{
+    root: User!
+    target: User!
+}
+
 type Query {
     storeUser(username: String!): User!
     storeUserLikes(_id: ID!, _idTarget: ID!): User!
     storeUserDislikes(_id: ID!, _idTarget: ID!): User!
     getUsersFree(_id: ID!): [User!]
+    getUser(_id: ID!): User!
 }
- 
+
 type Subscription {
-    userMatch: User!
+    userMatch(_id: ID!): User
+    newMessage(_id: ID!): SubscriptionData
 }

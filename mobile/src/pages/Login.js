@@ -4,7 +4,7 @@ import { gql } from '@apollo/client';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import logo from '../assets/logo.png';
-import apollo from '../services/apollo';
+import {client} from '../services/apollo'
 
 const LOGIN = gql`
     query storeUser($username: String!){
@@ -26,7 +26,7 @@ function Login({ navigation }){
     }, [])
 
     async function handleLogin(){
-        await apollo
+        await client
         .query({
             query: LOGIN,
             variables: {

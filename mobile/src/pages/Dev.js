@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Image, SafeAreaView, Text, StyleSheet, View, TouchableOpacity } from 'react-native';
-import { gql } from '@apollo/client';
+import { gql, useSubscription } from '@apollo/client';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import logo from '../assets/logo.png';
 import like from '../assets/like.png';
 import dislike from '../assets/dislike.png';
-import apollo from '../services/apollo';
+import itsamatch from '../assets/itsamatch.png';
+
+import {client} from '../services/apollo'
 
 const GETUSERSFREE = gql`
     query getUsersFree($_id: ID!){
@@ -35,38 +37,51 @@ const USERDISLIKES = gql`
     }
 }`
 
+const USER_MATCH = gql`
+    subscription newMessage($_id: ID!){
+        newMessage(_id: $_id) {
+            root { _id name username bio avatar }
+            target { _id name username bio avatar }
+        }
+}`
+
 function Dev({ navigation }){
-    apollo.resetStore();
+    client.cache.reset();
     const id = navigation.getParam('user');
     const [users, setUsers] = useState([]);
+    const [matchDev, setMatchDev] = useState(null);
+
+    useSubscription(
+        USER_MATCH, {variables: { _id: id },
+        onSubscriptionData: ({ subscriptionData: { data } }) => {
+                const userMatch = data.newMessage.root._id === id ? data.newMessage.target : data.newMessage.root;
+                setMatchDev(userMatch);
+            }
+        },
+    );
 
     useEffect(() => {
-        try {
-            async function loadUsers(){
-                await apollo
-                .query({
-                    query: GETUSERSFREE,
-                    variables: { _id: id }
-                })
-                .then(result => {
-                    if(result.data.getUsersFree){
-                        setUsers(result.data.getUsersFree);
-                    }
-                })
-                .catch(err => {
-                    throw new Error(err);
-                });
-            }
-            loadUsers();    
-        } catch (err) {
-            throw new Error(err);
+        async function loadUsers(){
+            await client
+            .query({
+                query: GETUSERSFREE,
+                variables: { _id: id }
+            })
+            .then(result => {
+                if(result.data.getUsersFree){
+                    setUsers(result.data.getUsersFree);
+                }
+            })
+            .catch(err => {
+                throw new Error(err);
+            });
         }
-        
+        loadUsers();    
     }, [id]);
 
     async function handleDislike(){
         const [{ _id }, ...rest] = users;
-        await apollo
+        await client
             .query({
                 query: USERDISLIKES,
                 variables: { _id: id, _idTarget: _id }
@@ -83,7 +98,7 @@ function Dev({ navigation }){
 
     async function handleLike(){
         const [{ _id }, ...rest] = users;
-        await apollo
+        await client
             .query({
                 query: USERLIKES,
                 variables: { _id: id, _idTarget: _id }
@@ -105,40 +120,54 @@ function Dev({ navigation }){
 
     return (
         <SafeAreaView style={styles.container}>
-            <TouchableOpacity onPress={handleLogout}>
-                <Image style={styles.logo} source={logo} />
-            </TouchableOpacity>
+            <View style={styles.frame} >
 
-            <View style={styles.cardsContainer} >
-                { users.length === 0 
-                    ? <Text style={styles.empty}>Acabou :(</Text>
-                    : ( 
-                        users.map((user, index) => (
-                        <View style={[styles.card, { zIndex: users.length - index }]} key={user._id}>
-                            <Image style={styles.avatar} source={{ uri: user.avatar}} />
-                            <View style={styles.footer}>
-                                <Text style={styles.name}>{user.name}</Text>
-                                <Text style={styles.bio} numberOfLines={3}>{user.bio}</Text>
+                <TouchableOpacity onPress={handleLogout}>
+                    <Image style={styles.logo} source={logo} />
+                </TouchableOpacity>
+
+                <View style={styles.cardsContainer} >
+                    { users.length === 0 
+                        ? <Text style={styles.empty}>Acabou :(</Text>
+                        : ( 
+                            users.map((user, index) => (
+                            <View style={[styles.card, { zIndex: users.length - index }]} key={user._id}>
+                                <Image style={styles.avatar} source={{ uri: user.avatar}} />
+                                <View style={styles.footer}>
+                                    <Text style={styles.name}>{user.name}</Text>
+                                    <Text style={styles.bio} numberOfLines={3}>{user.bio}</Text>
+                                </View>
                             </View>
-                        </View>
-                    ))
-                )}
-            </View>
-            
-            { users.length > 0 &&
-                (
-                <View style={styles.buttonsContainer}>
-                    <TouchableOpacity  style={styles.button} onPress={handleDislike}>
-                        <Image source={dislike} />
-                    </TouchableOpacity>
-                    <TouchableOpacity  style={styles.button} onPress={handleLike}>
-                        <Image source={like} />
-                    </TouchableOpacity>
+                        ))
+                    )}
                 </View>
-                )
-            }
-            
+                
+                { users.length > 0 &&
+                    (
+                    <View style={styles.buttonsContainer}>
+                        <TouchableOpacity  style={styles.button} onPress={handleDislike}>
+                            <Image source={dislike} />
+                        </TouchableOpacity>
+                        <TouchableOpacity  style={styles.button} onPress={handleLike}>
+                            <Image source={like} />
+                        </TouchableOpacity>
+                    </View>
+                    )
+                }
 
+                { matchDev && (
+                    <View style={styles.matchContainer}>
+                        <Image style={styles.matchImage} source={itsamatch} />
+                        <Image style={styles.matchAvatar} source={{ uri: matchDev.avatar }} />
+                        <Text style={styles.matchName}>{matchDev.name}</Text>
+                        <Text style={styles.matchBio}>{matchDev.bio}</Text>
+                        <TouchableOpacity  onPress={() => setMatchDev(null)}>
+                            <Text style={styles.matchClose}>FECHAR</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            
+            </View>
         </SafeAreaView>
     );
 }
@@ -146,12 +175,22 @@ function Dev({ navigation }){
 export default Dev;
 
 const styles = StyleSheet.create({
+
     container: {
+        flex: 1,
+        backgroundColor: '#df4723',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    
+    frame: {
         flex: 1,
         backgroundColor: '#f5f5f5',
         alignItems: 'center',
         justifyContent: 'space-between',
+        alignSelf: 'stretch'
     },
+
 
     logo: {
         marginTop: 30,
@@ -231,5 +270,50 @@ const styles = StyleSheet.create({
             height: 2
         }
     },
+
+
+    matchContainer: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    matchImage: {
+        height: 60,
+        resizeMode: 'contain'
+    },
+
+    matchAvatar: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        borderWidth: 5,
+        borderColor: '#fff',
+        marginVertical: 30
+    },
+
+    matchName: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: '#fff'
+    },
+
+    matchBio: {
+        marginTop: 10,
+        fontSize: 16,
+        color: 'rgba(255, 255, 255, 0.8)',
+        lineHeight: 24,
+        textAlign: 'center',
+        paddingHorizontal: 30
+    },
+
+    matchClose: {
+        marginTop: 30,
+        fontSize: 16,
+        color: 'rgba(255, 255, 255, 0.8)',
+        textAlign: 'center',
+        fontWeight: 'bold'
+    }
 
 })

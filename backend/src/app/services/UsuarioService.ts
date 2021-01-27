@@ -27,11 +27,15 @@ const UsuarioService = {
         if(!targetDev) throw new UserInputError('Usuário inexistente.');
 
         if (targetDev.likes.includes(loggedDev._id)){
-            pubsub.publish(topic, { userMatch: loggedDev });
+            await pubsub.publish(topic, { userMatch: loggedDev});
+            await pubsub.publish('MESSAGE_UPDATED', { newMessage: {
+                root: loggedDev,
+                target: targetDev
+                } 
+            });
         }
 
         loggedDev.likes.push(targetDev._id);
-
         return await loggedDev.save();
     },
 
@@ -55,13 +59,25 @@ const UsuarioService = {
 
     async getUsersFree(_id) {
         const loggedDev = await User.findById(_id);
-        return await User.find({
-             $and: [
-                { _id: { $ne: _id }},
-                { _id: { $nin: loggedDev.likes }},
-                { _id: { $nin: loggedDev.dislikes }}
-            ]
-        });
+        if(loggedDev){
+            return await User.find({
+                $and: [
+                    { _id: { $ne: _id }},
+                    { _id: { $nin: loggedDev.likes }},
+                    { _id: { $nin: loggedDev.dislikes }}
+                ]
+            });
+        }
+        return;
+    },
+
+    async getUser(_id, pubsub) {
+        const loggedDev = await User.findById(_id);
+        if(loggedDev){
+            await pubsub.publish('MESSAGE_UPDATED', { getUser: loggedDev });
+            return loggedDev;
+        }
+        return;
     },
 
 };
