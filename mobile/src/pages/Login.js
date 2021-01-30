@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, StyleSheet, Image, TextInput, TouchableOpacity, Text, Platform } from 'react-native';
-import { gql } from '@apollo/client';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import logo from '../assets/logo.png';
-import {client} from '../services/apollo'
-
-const LOGIN = gql`
-    query storeUser($username: String!){
-    storeUser(username: $username){
-        _id name username bio avatar
-        likes {
-            _id name username bio 
-        }
-    }
-}`
 
 function Login({ navigation }){
     const [user, setUser] = useState('kelsenbrito-dev')
@@ -26,23 +14,7 @@ function Login({ navigation }){
     }, [])
 
     async function handleLogin(){
-        await client
-        .query({
-            query: LOGIN,
-            variables: {
-                username: user
-            }
-        })
-        .then(async (result) => {
-            if(result.data.storeUser){
-                const { _id } = result.data.storeUser;
-                await AsyncStorage.setItem('user', _id);
-                navigation.navigate('Dev', { user: _id });
-            }
-        })
-        .catch(err => {
-            throw new Error(err);
-        });
+        navigation.navigate('Auth', { username: user });
     }   
 
     return (
@@ -69,7 +41,6 @@ function Login({ navigation }){
 }
 
 export default Login;
-
 
 const styles = StyleSheet.create({
     container: {

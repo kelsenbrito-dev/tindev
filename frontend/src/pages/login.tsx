@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { gql } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 
 import './login.css';
 import logo from '../assets/logo.svg';
@@ -26,11 +26,17 @@ const LOGIN = gql`
 }`
 
 function Login({ history }: RouteComponentProps) {
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState('kelsenbrito-dev');
+
+    const { loading, error, data } = useQuery<IUser>(LOGIN, { variables: {
+        username: username
+    }});
+
+    console.log(data);
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>){
         e.preventDefault();
-        
+
         await apollo
         .query<IUser>({
             query: LOGIN,
