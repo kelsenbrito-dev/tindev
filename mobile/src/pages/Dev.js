@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Image, SafeAreaView, Text, StyleSheet, View, TouchableOpacity } from 'react-native';
-import { gql, useSubscription } from '@apollo/client';
-import AsyncStorage from '@react-native-community/async-storage';
+import React, { useState, useEffect } from 'react'
+import { Image, SafeAreaView, Text, StyleSheet, View, TouchableOpacity } from 'react-native'
+import { gql, useSubscription } from '@apollo/client'
+import AsyncStorage from '@react-native-community/async-storage'
 
-import logo from '../assets/logo.png';
-import like from '../assets/like.png';
-import dislike from '../assets/dislike.png';
-import itsamatch from '../assets/itsamatch.png';
+import logo from '../assets/logo.png'
+import like from '../assets/like.png'
+import dislike from '../assets/dislike.png'
+import itsamatch from '../assets/itsamatch.png'
 
 import {client} from '../services/apollo'
 
@@ -46,19 +46,19 @@ const USER_MATCH = gql`
 }`
 
 function Dev({ navigation }){
-    client.cache.reset();
-    const id = navigation.getParam('user');
-    const [users, setUsers] = useState([]);
-    const [matchDev, setMatchDev] = useState(null);
+    client.cache.reset()
+    const id = navigation.getParam('user')
+    const [users, setUsers] = useState([])
+    const [matchDev, setMatchDev] = useState(null)
 
     useSubscription(
         USER_MATCH, {variables: { _id: id },
         onSubscriptionData: ({ subscriptionData: { data } }) => {
-                const userMatch = data.newMessage.root._id === id ? data.newMessage.target : data.newMessage.root;
-                setMatchDev(userMatch);
+                const userMatch = data.newMessage.root._id === id ? data.newMessage.target : data.newMessage.root
+                setMatchDev(userMatch)
             }
         },
-    );
+    )
 
     useEffect(() => {
         async function loadUsers(){
@@ -69,18 +69,18 @@ function Dev({ navigation }){
             })
             .then(result => {
                 if(result.data.getUsersFree){
-                    setUsers(result.data.getUsersFree);
+                    setUsers(result.data.getUsersFree)
                 }
             })
             .catch(err => {
-                throw new Error(err);
-            });
+                throw new Error(err)
+            })
         }
-        loadUsers();    
-    }, [id]);
+        loadUsers()    
+    }, [id])
 
     async function handleDislike(){
-        const [{ _id }, ...rest] = users;
+        const [{ _id }, ...rest] = users
         await client
             .query({
                 query: USERDISLIKES,
@@ -88,16 +88,16 @@ function Dev({ navigation }){
             })
             .then(result => {
                 if(result.data.storeUserDislikes){
-                    setUsers(rest);
+                    setUsers(rest)
                 }
             })
             .catch(err => {
-                throw new Error(err);
-            });
+                throw new Error(err)
+            })
     }
 
     async function handleLike(){
-        const [{ _id }, ...rest] = users;
+        const [{ _id }, ...rest] = users
         await client
             .query({
                 query: USERLIKES,
@@ -105,17 +105,17 @@ function Dev({ navigation }){
             })
             .then(result => {
                 if(result.data.storeUserLikes){
-                    setUsers(rest);
+                    setUsers(rest)
                 }
             })
             .catch(err => {
-                throw new Error(err);
-            });
+                throw new Error(err)
+            })
     }
     
     async function handleLogout(){
-        await AsyncStorage.clear();
-        navigation.navigate('Login');
+        await AsyncStorage.clear()
+        navigation.navigate('Login')
     }
 
     return (
@@ -169,10 +169,10 @@ function Dev({ navigation }){
             
             </View>
         </SafeAreaView>
-    );
+    )
 }
 
-export default Dev;
+export default Dev
 
 const styles = StyleSheet.create({
 

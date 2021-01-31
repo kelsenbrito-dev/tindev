@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { KeyboardAvoidingView, StyleSheet, Image, TextInput, TouchableOpacity, Text, Platform } from 'react-native';
-import AsyncStorage from '@react-native-community/async-storage';
+import React, { useState, useEffect } from 'react'
+import { KeyboardAvoidingView, StyleSheet, Image, TextInput, TouchableOpacity, Text, Platform } from 'react-native'
+import AsyncStorage from '@react-native-community/async-storage'
 
-import logo from '../assets/logo.png';
+import logo from '../assets/logo.png'
 
 function Login({ navigation }){
     const [user, setUser] = useState('kelsenbrito-dev')
 
     useEffect(() => {
         AsyncStorage.getItem('user').then(user => {
-            if(user) navigation.navigate('Dev', { user });
-        });
+            if(user) navigation.navigate('Dev', { user })
+        })
     }, [])
 
     async function handleLogin(){
-        navigation.navigate('Auth', { username: user });
+        navigation.navigate('Auth', { username: user })
     }   
 
     return (
@@ -37,10 +37,10 @@ function Login({ navigation }){
                 <Text style={styles.buttonText}>Enviar</Text>
             </TouchableOpacity>
         </KeyboardAvoidingView>
-    );
+    )
 }
 
-export default Login;
+export default Login
 
 const styles = StyleSheet.create({
     container: {
@@ -78,4 +78,4 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
 
-});
+})
